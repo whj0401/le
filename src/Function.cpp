@@ -9,11 +9,11 @@ namespace le
 {
     bool isAtomStatement(const SgStatement *stmt)
     {
-        return dynamic_cast<SgForStatement *>(stmt) ||
-               dynamic_cast<SgWhileStmt *>(stmt) ||
-               dynamic_cast<SgDoWhileStmt *>(stmt) ||
-               dynamic_cast<SgIfStmt *>(stmt) ||
-               dynamic_cast<SgSwitchStatement *>(stmt);
+        return dynamic_cast<const SgForStatement *>(stmt) ||
+               dynamic_cast<const SgWhileStmt *>(stmt) ||
+               dynamic_cast<const SgDoWhileStmt *>(stmt) ||
+               dynamic_cast<const SgIfStmt *>(stmt) ||
+               dynamic_cast<const SgSwitchStatement *>(stmt);
     }
     
     void Function::add_input_parameter(const le::Variable &v)
