@@ -23,6 +23,10 @@ namespace le
         void add_input_parameter(const Variable &v);
     
         void add_input_parameterlist();
+    
+        SgVarRefExp* get_func_call_lhs(SgFunctionCallExp* func_call);
+        
+        void handle_expression(SgExpression* expr);
         
         void handle_statement(SgStatement* stmt);
         
@@ -40,6 +44,10 @@ namespace le
         
         void handle_return_statement(SgReturnStmt* return_stmt);
         
+        void handle_var_declaration(SgVariableDeclaration* decl);
+        
+        void handle_expr_statement(SgExprStatement* expr_s);
+        
         void traverse_statements(SgStatementPtrList& stmt_list);
     public:
         string func_name;
@@ -52,9 +60,11 @@ namespace le
         
         void add_variable(const Variable &v);
         
+        void add_procedure(const string& ref_name, const SgExpression* expr);
+        
         void merge(const Function & f);
         
-        string to_string();
+        string to_string() const;
     };
     
 }

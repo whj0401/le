@@ -10,11 +10,13 @@ namespace le
     
     const int T_REAL = 10001;
     
-    string VariableTable::to_string()
+    const string REAL_MANGLED = "iRRAM__scope__class_REAL";
+    
+    string VariableTable::to_string() const
     {
         stringstream ss;
         ss << "{";
-        for(auto v : T)
+        for(const auto &v : T)
         {
             v.second.add_to_stringstream(ss);
             ss << ", ";

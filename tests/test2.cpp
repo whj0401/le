@@ -29,4 +29,5 @@ iRRAM::REAL test2(iRRAM::REAL a, iRRAM::REAL b)
     c2 = a + b;
     c3 = c2;
     c3 = 2 + a;
+    return c3;
 };

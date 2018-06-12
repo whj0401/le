@@ -17,6 +17,8 @@ namespace le{
     
     extern const int T_REAL;
     
+    extern const string REAL_MANGLED;
+    
     class Variable
     {
     public:
@@ -29,7 +31,7 @@ namespace le{
                 var_name(_var_name), type_node(_type_node), initExpr(_initExpr)
         {
             type_T = type_node->variantT();
-            if(type_T == T_CLASS && type_node->get_mangled() == "\"iRRAM__scope__class_REAL\"")
+            if(type_T == T_CLASS && type_node->get_mangled() == REAL_MANGLED)
             {
                 type_T = T_REAL;
             }
@@ -40,9 +42,9 @@ namespace le{
             return type_T == T_REAL;
         }
         
-        inline void add_to_stringstream(stringstream& ss)
+        inline void add_to_stringstream(stringstream& ss) const
         {
-            ss << "\"" << var_name << "\": \"" << type_node->get_mangled() << "\"";
+            ss << "\"" << var_name << "\": " << type_node->get_mangled() << "";
         }
     };
     
@@ -64,7 +66,12 @@ namespace le{
             return T.find(name) != T.end();
         }
         
-        string to_string();
+        inline const Variable& find(const string & name)
+        {
+            return T.find(name)->second;
+        }
+        
+        string to_string() const;
     };
     
 }

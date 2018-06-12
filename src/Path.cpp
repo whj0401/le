@@ -10,20 +10,25 @@ namespace le
     
     const string TAB = "    ";
     
-    string Procedure::to_string(unsigned int tab_num)
+    CodeCreater paths_pool;
+    
+    string Procedure::to_string(unsigned int tab_num) const
     {
         stringstream ss;
-        ss << "[\"" << left.var_name << "\", \"" << right->unparseToString() << "\"]";
+        if(right == nullptr)
+            ss << "[\"" << left.var_name << "\", " << "NULL";
+        else
+            ss << "[\"" << left.var_name << "\", \"" << right->unparseToString() << "\"]";
         return ss.str();
     }
     
-    string CodeBlock::to_string(unsigned int tab_num)
+    string CodeBlock::to_string(unsigned int tab_num) const
     {
         stringstream ss;
         string tab = "";
         for (int i = 0; i < tab_num; ++i)
             tab += TAB;
-        for (auto s : L)
+        for (const auto &s : L)
         {
             ss << tab << s->unparseToString() << endl;
         }
@@ -36,13 +41,7 @@ namespace le
         return false;
     }
     
-    void Path::add_procedure(le::Variable v, SgExpression *e)
-    {
-        Procedure tmp(v, e);
-        procedures.push_back(tmp);
-    }
-    
-    string Path::to_string(unsigned int tab_num)
+    string Path::to_string(unsigned int tab_num) const
     {
         stringstream ss;
         string tab = "";
@@ -50,17 +49,23 @@ namespace le
             tab += TAB;
         
         ss << tab << "{" << endl;
+        ss << tab << TAB << "\"variables\": " << var_tbl.to_string() << endl;
         ss << tab << TAB << "\"constraint\": [" << constraint_list.to_string() << "]," << endl;
         ss << tab << TAB << "\"content\": [";
-        for (auto p : procedures)
+        for (const auto p : codes)
         {
-            ss << p.to_string() << ", ";
+            ss << p->to_string() << ", ";
         }
         if (is_return)
         {
-            ss << "[\"return\": " << "\"" << ret_expr->unparseToString() << "\"";
+            ss << "[\"return\": " << "\"" << ret_expr->unparseToString() << "\"]";
         }
         ss << "]," << endl << tab << "}," << endl;
         return ss.str();
+    }
+    
+    Path::~Path()
+    {
+    
     }
 }

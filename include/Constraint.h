@@ -25,7 +25,7 @@ namespace le
                 e(_e)
         {}
         
-        inline string to_string()
+        inline string to_string() const
         {
             e->unparseToString();
         }
@@ -41,10 +41,10 @@ namespace le
             L.push_back(c);
         }
         
-        string to_string()
+        string to_string() const
         {
             stringstream ss;
-            for (auto i : L)
+            for (const auto &i : L)
             {
                 ss << "(" + i.to_string() + ")&&";
             }
