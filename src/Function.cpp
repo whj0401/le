@@ -10,15 +10,6 @@ namespace le
 {
     using namespace std;
     
-    bool isAtomStatement(const SgStatement *stmt)
-    {
-        return dynamic_cast<const SgForStatement *>(stmt) ||
-               dynamic_cast<const SgWhileStmt *>(stmt) ||
-               dynamic_cast<const SgDoWhileStmt *>(stmt) ||
-               dynamic_cast<const SgIfStmt *>(stmt) ||
-               dynamic_cast<const SgSwitchStatement *>(stmt);
-    }
-    
     void Function::add_input_parameter(const le::Variable &v)
     {
         var_tbl.add_variable(v);
@@ -40,6 +31,7 @@ namespace le
     void Function::handle_statement(SgStatement *stmt)
     {
 //        print_whole_node(stmt);
+        if(stmt == nullptr) return;
         if(auto s = dynamic_cast<SgBasicBlock*>(stmt))
         {
             handle_block_statement(s);
@@ -88,18 +80,15 @@ namespace le
         SgStatementPtrList &stmt_list = block->get_statements();
         for(auto s : stmt_list)
         {
-//            if(isAtomStatement(s))
-//            {
-//                handle_statement(s);
-//                continue;
-//            }
             handle_statement(s);
         }
     }
     
     void Function::handle_for_statement(SgForStatement *for_stmt)
     {
-    
+//        print_whole_node(for_stmt);
+        Loop* loop = _in_pool->create_loop(for_stmt, this, nullptr);
+        add_loop(*loop);
     }
     
     void Function::handle_while_statement(SgWhileStmt *while_stmt)
@@ -114,7 +103,22 @@ namespace le
     
     void Function::handle_if_statement(SgIfStmt *if_stmt)
     {
-    
+        SgStatement *condition_stmt = if_stmt->get_conditional();
+        if(auto *expr_stmt = dynamic_cast<SgExprStatement *>(condition_stmt))
+        {
+            SgExpression *condition = expr_stmt->get_expression();
+            handle_expression(condition);
+            Function new_func = *this;
+            new_func.clear_returned_path();
+            
+            new_func.add_constraint(condition, false);
+            this->add_constraint(condition, true);
+            
+            this->handle_statement(if_stmt->get_true_body());
+            new_func.handle_statement(if_stmt->get_false_body());
+            
+            this->merge(new_func);
+        }
     }
     
     void Function::handle_switch_statement(SgSwitchStatement *switch_stmt)
@@ -162,20 +166,6 @@ namespace le
         }
     }
     
-    SgVarRefExp* Function::get_func_call_lhs(SgFunctionCallExp* func_call)
-    {
-        auto suc_list = func_call->get_traversalSuccessorContainer();
-        for(auto n : suc_list)
-        {
-            if(auto dot_exp = dynamic_cast<SgDotExp*>(n))
-            {
-                SgExpression* left = dot_exp->get_lhs_operand();
-                return dynamic_cast<SgVarRefExp*>(left);
-            }
-        }
-        return nullptr;
-    }
-    
     void Function::handle_expression(SgExpression *expr)
     {
         if(auto func_call = dynamic_cast<SgFunctionCallExp*>(expr))
@@ -195,6 +185,26 @@ namespace le
             {
 //                cout << func_call->unparseToString() << endl;
             }
+            else if(func_decl_str == "public: friend inline class REAL operator-(const class REAL &x,const class REAL &y);")
+            {
+            
+            }
+            else if(func_decl_str == "public: friend inline class REAL operator*(const class REAL &x,const class REAL &y);")
+            {
+            
+            }
+            else if(func_decl_str == "public: friend inline class REAL operator/(const class REAL &x,const class REAL &y);")
+            {
+            
+            }
+            else if(func_decl_str == "public: inline REAL &operator+=(const class REAL &y);")
+            {
+            
+            }
+            else if(func_decl_str == "public: inline REAL &operator++();")
+            {
+            
+            }
         }
     }
     
@@ -210,6 +220,7 @@ namespace le
         SgExpression *expr = return_stmt->get_expression();
         for(auto &p : path_list)
         {
+            if(p.is_return) continue;
             p.is_return = true;
             p.ret_expr = expr;
         }
@@ -220,8 +231,8 @@ namespace le
         // TODO
     }
     
-    Function::Function(const std::string &_func_name, SgFunctionDeclaration* _decl) :
-            func_name(_func_name), decl(_decl)
+    Function::Function(const std::string &_func_name, SgFunctionDeclaration* _decl, CodeCreater* _pool) :
+            func_name(_func_name), decl(_decl), _in_pool(_pool)
     {
         if(decl == nullptr)
             return;
@@ -285,9 +296,57 @@ namespace le
         }
     }
     
+    void Function::add_constraint(SgExpression* expr, bool is_not)
+    {
+        Constraint tmp(expr, is_not);
+        for(auto &path : path_list)
+        {
+            if(path.is_return) continue;
+            path.add_constraint(tmp);
+        }
+    }
+    
+    void Function::add_loop(const le::Loop &loop)
+    {
+        for(auto & p : path_list)
+        {
+            if(p.can_add_code())
+            {
+                p.add_loop(&loop);
+            }
+        }
+    }
+    
+    void Function::clear_returned_path()
+    {
+        vector<Path> new_path_list;
+        for(auto &path : path_list)
+        {
+            if(path.is_return) continue;
+            new_path_list.push_back(path);
+        }
+        path_list = new_path_list;
+    }
+    
+    VariableTable Function::collect_all_var_tbl()
+    {
+        VariableTable tmp = var_tbl;
+        for(auto & p : path_list)
+        {
+            for(auto v : p.var_tbl.T)
+            {
+                tmp.add_variable(v.second);
+            }
+        }
+        return tmp;
+    }
+    
     void Function::merge(const le::Function &f)
     {
-    
+        for(auto &path : f.path_list)
+        {
+            path_list.push_back(path);
+        }
     }
     
     string Function::to_string() const

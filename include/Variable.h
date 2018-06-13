@@ -56,14 +56,15 @@ namespace le{
         VariableTable()
         {}
         
-        inline void add_variable(const Variable& v)
-        {
-            T.insert(pair<string, Variable>(v.var_name, v));
-        }
-        
         inline bool has_variable(const string & name)
         {
             return T.find(name) != T.end();
+        }
+    
+        inline void add_variable(const Variable& v)
+        {
+            if(has_variable(v.var_name)) return;
+            T.insert(pair<string, Variable>(v.var_name, v));
         }
         
         inline const Variable& find(const string & name)

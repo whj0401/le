@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include "Path.h"
+#include "Loop.h"
+#include "common.h"
 
 namespace le
 {
@@ -23,8 +25,6 @@ namespace le
         void add_input_parameter(const Variable &v);
     
         void add_input_parameterlist();
-    
-        SgVarRefExp* get_func_call_lhs(SgFunctionCallExp* func_call);
         
         void handle_expression(SgExpression* expr);
         
@@ -51,16 +51,25 @@ namespace le
         void traverse_statements(SgStatementPtrList& stmt_list);
     public:
         string func_name;
+        CodeCreater* _in_pool;
         SgFunctionDeclaration* decl;
         VariableTable var_tbl;
         VariableTable input_parameters;
         vector<Path> path_list;
         
-        Function(const string & _func_name, SgFunctionDeclaration* _decl);
+        Function(const string & _func_name, SgFunctionDeclaration* _decl, CodeCreater* _pool = &paths_pool);
         
         void add_variable(const Variable &v);
         
         void add_procedure(const string& ref_name, const SgExpression* expr);
+        
+        void add_constraint(SgExpression* expr, bool is_not);
+        
+        void add_loop(const Loop& loop);
+        
+        VariableTable collect_all_var_tbl();
+        
+        void clear_returned_path();
         
         void merge(const Function & f);
         
