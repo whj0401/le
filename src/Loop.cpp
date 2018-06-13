@@ -433,6 +433,7 @@ namespace le
     {
         stringstream ss;
         string tab = generate_tab(tab_num);
+        ss << endl;
         ss << tab << "{" << endl;
         ss << tab << TAB << "\"type\": " << "\"loop\"," << endl;
         ss << tab << TAB << "\"content\": " << "{" << endl;
@@ -445,7 +446,7 @@ namespace le
         }
         ss << tab << TAB << TAB << "]" << endl;
         ss << tab << TAB << "}" << endl;
-        ss << tab << "}" << endl;
+        ss << tab << "}";
         return ss.str();
     }
 }
