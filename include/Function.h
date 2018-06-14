@@ -76,6 +76,8 @@ namespace le
         string to_string() const;
     
         string to_code() const;
+    
+        string to_klee_code_functions();
     };
     
 }

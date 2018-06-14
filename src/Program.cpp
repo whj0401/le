@@ -34,7 +34,7 @@ namespace le
         stringstream ss;
         ss << "{" << endl;
         ss << "\"program_name\": " << "\"" << name << "\"" << endl;
-        for(auto f : func_list)
+        for (const auto &f : func_list)
         {
             ss << f.to_string() << endl;
         }
@@ -47,11 +47,21 @@ namespace le
         stringstream ss;
         ss << "{" << endl;
         ss << "\"program_name\": " << "\"" << name << "\"" << endl;
-        for (auto f : func_list)
+        for (const auto &f : func_list)
         {
             ss << f.to_code() << endl;
         }
         ss << "}" << endl;
+        return ss.str();
+    }
+    
+    string Program::to_klee_code_functions()
+    {
+        stringstream ss;
+        for (auto &f : func_list)
+        {
+            ss << f.to_klee_code_functions();
+        }
         return ss.str();
     }
     
@@ -78,6 +88,11 @@ namespace le
         for (auto &p : program_list)
         {
             cout << p.to_codes_block();
+        }
+    
+        for (auto &p : program_list)
+        {
+            cout << p.to_klee_code_functions();
         }
     }
 }

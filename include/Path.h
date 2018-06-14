@@ -121,8 +121,24 @@ namespace le
         
     };
     
+    extern size_t path_count;
+    
+    class procedure_block
+    {
+    public:
+        int block_id;
+        size_t begin_codes_idx;
+        size_t end_codes_idx; // not include
+        bool finished;
+        vector<string> left_real_value_name_list;
+        
+        void add_klee_out_code(stringstream &ss, unsigned int tab_num) const;
+    };
+    
     class Path
     {
+    private:
+        void generate_procedure_block_list();
     public:
         CodeCreater* pool;
         string path_id;
@@ -133,10 +149,14 @@ namespace le
         VariableTable var_tbl;
         bool can_break;
         bool can_continue;
+        vector<procedure_block> procedure_block_list;
         
         Path(CodeCreater* _pool = &paths_pool) :
                 pool(_pool), is_return(false), ret_expr(nullptr), can_break(false), can_continue(false)
-        {}
+        {
+            path_id = string("__path__") + std::to_string(path_count);
+            path_count++;
+        }
         
         inline bool can_add_code()
         {
@@ -167,6 +187,8 @@ namespace le
     
         string to_code(unsigned int tab_num = 0) const;
         string to_string_as_initializer() const;
+    
+        string to_klee_code_functions(const VariableTable &input_parameters);
         
         ~Path();
     };

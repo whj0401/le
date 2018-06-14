@@ -36,8 +36,8 @@ namespace le{
                 type_T = T_REAL;
             }
         }
-        
-        inline bool is_real_type()
+    
+        inline bool is_real_type() const
         {
             return type_T == T_REAL;
         }
@@ -80,6 +80,8 @@ namespace le{
         string to_string() const;
     
         string to_parameterlist() const;
+    
+        string to_make_real_klee_symbolic_code(unsigned int tab_num = 0) const;
     
         string to_declaration_code(unsigned int tab_num = 0) const;
     };

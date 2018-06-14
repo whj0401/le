@@ -11,6 +11,8 @@ namespace le
     
     CodeCreater paths_pool;
     
+    size_t path_count = 0;
+    
     string Procedure::to_string(unsigned int tab_num) const
     {
         stringstream ss;
@@ -103,8 +105,8 @@ namespace le
     {
         stringstream ss;
         string tab = generate_tab(tab_num);
-        
-        ss << tab << "{" << endl;
+    
+        ss << tab << "{ #" << path_id << endl;
         ss << tab << TAB << "\"variables\": " << var_tbl.to_string() << "," << endl;
         ss << tab << TAB << "\"constraint\": [" << constraint_list.to_string() << "]," << endl;
         ss << tab << TAB << "\"path\": [";
@@ -153,6 +155,7 @@ namespace le
         stringstream ss;
         string tab = generate_tab(tab_num);
         ss << tab << "if(" << constraint_list.to_string() << "){" << endl;
+        ss << tab << TAB << "// " << path_id << endl;
         // declare local variable
         ss << var_tbl.to_declaration_code(tab_num + 1);
         for (const auto &p : codes)
@@ -172,6 +175,114 @@ namespace le
             ss << tab << TAB << "break;" << endl;
         }
         ss << tab << "}" << endl;
+        return ss.str();
+    }
+    
+    void procedure_block::add_klee_out_code(std::stringstream &ss, unsigned int tab_num) const
+    {
+        string tab = generate_tab(tab_num);
+        for (const auto &n : this->left_real_value_name_list)
+        {
+            ss << tab << "klee_output(\"" << n << "\", " << n << ".value);" << endl;
+        }
+    }
+    
+    void Path::generate_procedure_block_list()
+    {
+        size_t cur_idx = 0;
+        size_t codes_size = codes.size();
+        for (; cur_idx < codes_size; ++cur_idx)
+        {
+            if (codes[cur_idx]->t == procedure)
+            {
+                if (procedure_block_list.empty() || procedure_block_list.back().finished)
+                {
+                    procedure_block tmp;
+                    tmp.block_id = procedure_block_list.size();
+                    tmp.begin_codes_idx = cur_idx;
+                    tmp.end_codes_idx = cur_idx + 1;
+                    tmp.finished = false;
+                    procedure_block_list.push_back(tmp);
+                }
+                else
+                {
+                    procedure_block_list.back().end_codes_idx = cur_idx + 1;
+                }
+                auto p = dynamic_cast<const Procedure *>(codes[cur_idx]);
+                if (p->left.is_real_type())
+                {
+                    procedure_block_list.back().left_real_value_name_list.push_back(p->left.var_name);
+                }
+            }
+            else
+            {
+                procedure_block_list.back().finished = true;
+            }
+        }
+        if (!procedure_block_list.empty()) procedure_block_list.back().finished = true;
+    }
+    
+    string Path::to_klee_code_functions(const le::VariableTable &input_parameters)
+    {
+        stringstream ss;
+        if (codes.empty())
+        {
+            ss << "void " << path_id << input_parameters.to_parameterlist() << "{}";
+            return ss.str();
+        }
+//        size_t cur_idx = 0;
+//        size_t codes_size = codes.size();
+//        for(; cur_idx < codes_size; ++cur_idx)
+//        {
+//            if(codes[cur_idx]->t == procedure)
+//            {
+//                if(procedure_block_list.empty() || procedure_block_list.back().finished)
+//                {
+//                    procedure_block tmp;
+//                    tmp.block_id = procedure_block_list.size();
+//                    tmp.begin_codes_idx = cur_idx;
+//                    tmp.end_codes_idx = cur_idx + 1;
+//                    tmp.finished = false;
+//                    procedure_block_list.push_back(tmp);
+//                }
+//                else
+//                {
+//                    procedure_block_list.back().end_codes_idx = cur_idx + 1;
+//                }
+//            }
+//            else
+//            {
+//                procedure_block_list.back().finished = true;
+//                if(codes[cur_idx]->t == loop)
+//                {
+//                    Loop* loop = (Loop*)codes[cur_idx];
+//                    ss << loop->to_klee_code_functions();
+//                }
+//            }
+//        }
+//        if(!procedure_block_list.empty()) procedure_block_list.back().finished = true;
+        generate_procedure_block_list();
+        for (auto &block : procedure_block_list)
+        {
+            ss << endl;
+            ss << "void " << path_id << "__" << block.block_id << input_parameters.to_parameterlist() << "{" << endl;
+            ss << input_parameters.to_make_real_klee_symbolic_code(1) << endl;
+            ss << var_tbl.to_declaration_code(1) << endl;
+            for (size_t i = block.begin_codes_idx; i < block.end_codes_idx; ++i)
+            {
+                ss << TAB << codes[i]->to_code() << endl;
+            }
+            block.add_klee_out_code(ss, 1);
+            ss << "}" << endl;
+        }
+        for (auto &code : codes)
+        {
+            if (code->t == loop)
+            {
+                Loop *l = (Loop *) code;
+                ss << l->to_klee_code_functions();
+            }
+        }
         return ss.str();
     }
     

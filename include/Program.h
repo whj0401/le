@@ -36,6 +36,8 @@ namespace le
         string to_string();
     
         string to_codes_block();
+    
+        string to_klee_code_functions();
     };
     
     

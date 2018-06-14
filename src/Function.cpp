@@ -388,4 +388,14 @@ namespace le
         return ss.str();
     }
     
+    string Function::to_klee_code_functions()
+    {
+        stringstream ss;
+        for (auto &p : path_list)
+        {
+            ss << p.to_klee_code_functions(input_parameters);
+        }
+        return ss.str();
+    }
+    
 }

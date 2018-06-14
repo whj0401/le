@@ -333,6 +333,7 @@ namespace le
     Loop::Loop(const SgStatement *_loop_stmt, Function* _func_ptr, Loop* _father_loop, CodeCreater* _pool) :
             loop_stmt(_loop_stmt), func_ptr(_func_ptr), father_loop(_father_loop), _in_pool(_pool)
     {
+        Code::t = loop;
         if (auto s = dynamic_cast<const SgForStatement *>(loop_stmt))
         {
             loop_type = FOR;
@@ -522,6 +523,16 @@ namespace le
         ss << tab << TAB << TAB << "]" << endl;
         ss << tab << TAB << "}" << endl;
         ss << tab << "}";
+        return ss.str();
+    }
+    
+    string Loop::to_klee_code_functions()
+    {
+        stringstream ss;
+        for (auto &p : path_list)
+        {
+            ss << p.to_klee_code_functions(var_tbl);
+        }
         return ss.str();
     }
 }

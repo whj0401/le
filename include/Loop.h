@@ -86,6 +86,8 @@ namespace le
         virtual string to_string(unsigned int tab_num = 0) const;
     
         virtual string to_code(unsigned int tab_num = 0) const;
+    
+        string to_klee_code_functions();
     };
 }
 
