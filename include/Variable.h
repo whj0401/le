@@ -46,6 +46,11 @@ namespace le{
         {
             ss << "\"" << var_name << "\": " << type_node->get_mangled() << "";
         }
+    
+        inline string to_declaration() const
+        {
+            return type_node->unparseToString() + " " + var_name + ";";
+        }
     };
     
     class VariableTable
@@ -73,6 +78,10 @@ namespace le{
         }
         
         string to_string() const;
+    
+        string to_parameterlist() const;
+    
+        string to_declaration_code(unsigned int tab_num = 0) const;
     };
     
 }

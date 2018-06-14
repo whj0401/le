@@ -86,15 +86,22 @@ namespace le
             {
             
             }
-            else if(func_decl_str == "public: friend inline class REAL operator+=(const class REAL &x,const class REAL &y);")
+            else if (func_decl_str ==
+                     "public: friend inline class REAL &operator+=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator-=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator*=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator/=(class REAL &x,const class REAL &y);")
             {
                 SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
                 add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
             }
             else
             {
-                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-                add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
+//                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+//                add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
             }
         }
         else if(auto comma_expr = dynamic_cast<SgCommaOpExp*>(expr))
@@ -141,7 +148,22 @@ namespace le
     
     void Loop::handle_if_statement(SgIfStmt *if_stmt)
     {
-    
+        SgStatement *condition_stmt = if_stmt->get_conditional();
+        if (auto *expr_stmt = dynamic_cast<SgExprStatement *>(condition_stmt))
+        {
+            SgExpression *condition = expr_stmt->get_expression();
+            handle_expression(condition, false);
+            Loop new_loop = *this;
+            new_loop.clear_path_with_continue_break_return();
+        
+            new_loop.add_constraint(condition, false);
+            this->add_constraint(condition, true);
+        
+            this->handle_statement(if_stmt->get_true_body(), false);
+            new_loop.handle_statement(if_stmt->get_false_body(), false);
+        
+            this->merge(new_loop);
+        }
     }
     
     void Loop::handle_switch_statement(SgSwitchStatement *switch_stmt)
@@ -416,17 +438,49 @@ namespace le
         }
     }
     
+    void Loop::add_constraint(SgExpression *expr, bool is_not)
+    {
+        Constraint tmp(expr, is_not);
+        for (auto &path : path_list)
+        {
+            if (path.is_return) continue;
+            path.add_constraint(tmp);
+        }
+    }
+    
     VariableTable Loop::collect_all_var_tbl()
     {
         VariableTable tmp = var_tbl;
         for(auto & p : path_list)
         {
+            if (!p.can_add_code()) continue;
             for(auto v : p.var_tbl.T)
             {
                 tmp.add_variable(v.second);
             }
         }
         return tmp;
+    }
+    
+    void Loop::clear_path_with_continue_break_return()
+    {
+        vector<Path> new_path_list;
+        for (auto &path : path_list)
+        {
+            if (path.can_add_code())
+            {
+                new_path_list.push_back(path);
+            }
+        }
+        path_list = new_path_list;
+    }
+    
+    void Loop::merge(const le::Loop &l)
+    {
+        for (auto &path : l.path_list)
+        {
+            this->path_list.push_back(path);
+        }
     }
     
     string Loop::to_string(unsigned int tab_num) const
@@ -440,9 +494,30 @@ namespace le
         ss << tab << TAB << TAB << "\"variables\": " << var_tbl.to_string() << endl;
         ss << tab << TAB << TAB << "\"initialize\": " << initialize.to_string_as_initializer() << endl;
         ss << tab << TAB << TAB << "\"loop_body\": [" << endl;
-        for(auto & p : path_list)
+        for (const auto &p : path_list)
         {
             ss << p.to_string(tab_num + 3);
+        }
+        ss << tab << TAB << TAB << "]" << endl;
+        ss << tab << TAB << "}" << endl;
+        ss << tab << "}";
+        return ss.str();
+    }
+    
+    string Loop::to_code(unsigned int tab_num) const
+    {
+        stringstream ss;
+        string tab = generate_tab(tab_num);
+        ss << endl;
+        ss << tab << "{" << endl;
+        ss << tab << TAB << "\"type\": " << "\"loop\"," << endl;
+        ss << tab << TAB << "\"content\": " << "{" << endl;
+        ss << tab << TAB << TAB << "\"variables\": " << var_tbl.to_string() << endl;
+        ss << tab << TAB << TAB << "\"initialize\": " << initialize.to_string_as_initializer() << endl;
+        ss << tab << TAB << TAB << "\"loop_body\": [" << endl;
+        for (const auto &p : path_list)
+        {
+            ss << p.to_code(tab_num + 3);
         }
         ss << tab << TAB << TAB << "]" << endl;
         ss << tab << TAB << "}" << endl;

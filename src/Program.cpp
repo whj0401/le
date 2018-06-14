@@ -42,6 +42,19 @@ namespace le
         return ss.str();
     }
     
+    string Program::to_codes_block()
+    {
+        stringstream ss;
+        ss << "{" << endl;
+        ss << "\"program_name\": " << "\"" << name << "\"" << endl;
+        for (auto f : func_list)
+        {
+            ss << f.to_code() << endl;
+        }
+        ss << "}" << endl;
+        return ss.str();
+    }
+    
     void run_project(int argc, char **argv)
     {
         project = frontend(argc, argv);
@@ -56,10 +69,15 @@ namespace le
                 program_list.push_back(program);
             }
         }
-        
-        for(auto p : program_list)
+    
+        for (auto &p : program_list)
         {
             cout << p.to_string();
+        }
+    
+        for (auto &p : program_list)
+        {
+            cout << p.to_codes_block();
         }
     }
 }

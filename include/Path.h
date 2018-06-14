@@ -44,6 +44,9 @@ namespace le
         {}
         virtual string to_string(unsigned int tab_num = 0) const
         {}
+    
+        virtual string to_code(unsigned int tab_num = 0) const
+        {}
         ~Code()
         {}
     };
@@ -61,6 +64,8 @@ namespace le
         }
         
         string to_string(unsigned int tab_num = 0) const;
+    
+        string to_code(unsigned int tab_num = 0) const;
         virtual ~Procedure()
         {}
     };
@@ -84,7 +89,8 @@ namespace le
         }
         
         string to_string(unsigned int tab_num = 0) const;
-        
+    
+        string to_code(unsigned int tab_num = 0) const;
         virtual ~CodeBlock()
         {}
     };
@@ -158,7 +164,8 @@ namespace le
         }
         
         string to_string(unsigned int tab_num = 0) const;
-        
+    
+        string to_code(unsigned int tab_num = 0) const;
         string to_string_as_initializer() const;
         
         ~Path();

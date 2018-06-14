@@ -27,6 +27,50 @@ namespace le
         return ss.str();
     }
     
+    string Procedure::to_code(unsigned int tab_num) const
+    {
+        stringstream ss;
+        ss << generate_tab(tab_num);
+        if (auto func_call = dynamic_cast<const SgFunctionCallExp *>(right))
+        {
+            string func_decl_str = func_call->getAssociatedFunctionDeclaration()->unparseToString();
+            if (func_decl_str == "public: friend inline class REAL &operator+=(class REAL &x,const class REAL &y);")
+            {
+                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+                ss << left.var_name << "=(" << left.var_name << ")+(" << expr_list[1]->unparseToString() << ");";
+                return ss.str();
+            }
+            else if (func_decl_str ==
+                     "public: friend inline class REAL &operator-=(class REAL &x,const class REAL &y);")
+            {
+                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+                ss << left.var_name << "=(" << left.var_name << ")-(" << expr_list[1]->unparseToString() << ");";
+                return ss.str();
+            }
+            else if (func_decl_str ==
+                     "public: friend inline class REAL &operator*=(class REAL &x,const class REAL &y);")
+            {
+                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+                ss << left.var_name << "=(" << left.var_name << ")*(" << expr_list[1]->unparseToString() << ");";
+                return ss.str();
+            }
+            else if (func_decl_str ==
+                     "public: friend inline class REAL &operator/=(class REAL &x,const class REAL &y);")
+            {
+                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+                ss << left.var_name << "=(" << left.var_name << ")/(" << expr_list[1]->unparseToString() << ");";
+                return ss.str();
+            }
+        }
+        
+        ss << left.var_name << "=";
+        if (right == nullptr)
+        { ss << "0;"; }
+        else
+        { ss << right->unparseToString() << ";"; }
+        return ss.str();
+    }
+    
     string CodeBlock::to_string(unsigned int tab_num) const
     {
         stringstream ss;
@@ -36,6 +80,11 @@ namespace le
             ss << tab << s->unparseToString() << endl;
         }
         return ss.str();
+    }
+    
+    string CodeBlock::to_code(unsigned int tab_num) const
+    {
+        return this->to_string(tab_num);
     }
     
     bool belongs_to_codeblock(SgStatement *s)
@@ -59,13 +108,21 @@ namespace le
         ss << tab << TAB << "\"variables\": " << var_tbl.to_string() << "," << endl;
         ss << tab << TAB << "\"constraint\": [" << constraint_list.to_string() << "]," << endl;
         ss << tab << TAB << "\"path\": [";
-        for (const auto p : codes)
+        for (const auto &p : codes)
         {
             ss << p->to_string(tab_num + 1);
         }
         if (is_return)
         {
-            ss << tab << TAB << "{\"return\": " << "\"" << ret_expr->unparseToString() << "\"}";
+            ss << endl << tab << TAB << "{\"return\": " << "\"" << ret_expr->unparseToString() << "\"}";
+        }
+        else if (can_continue)
+        {
+            ss << endl << tab << TAB << "{\"continue\"}";
+        }
+        else if (can_break)
+        {
+            ss << endl << tab << TAB << "{\"break\"}";
         }
         ss << "]," << endl << tab << "}," << endl;
         return ss.str();
@@ -88,6 +145,33 @@ namespace le
             }
         }
         ss << "}";
+        return ss.str();
+    }
+    
+    string Path::to_code(unsigned int tab_num) const
+    {
+        stringstream ss;
+        string tab = generate_tab(tab_num);
+        ss << tab << "if(" << constraint_list.to_string() << "){" << endl;
+        // declare local variable
+        ss << var_tbl.to_declaration_code(tab_num + 1);
+        for (const auto &p : codes)
+        {
+            ss << p->to_code(tab_num + 1) << endl;
+        }
+        if (is_return)
+        {
+            ss << tab << TAB << "return " << ret_expr->unparseToString() << ";" << endl;
+        }
+        else if (can_continue)
+        {
+            ss << tab << TAB << "continue;" << endl;
+        }
+        else if (can_break)
+        {
+            ss << tab << TAB << "break;" << endl;
+        }
+        ss << tab << "}" << endl;
         return ss.str();
     }
     

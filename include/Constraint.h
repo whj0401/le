@@ -66,6 +66,7 @@ namespace le
         
         string to_string() const
         {
+            if (L.empty()) return "(true)";
             stringstream ss;
             for (const auto &i : L)
             {

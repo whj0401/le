@@ -29,19 +29,18 @@ iRRAM::REAL test2(iRRAM::REAL a, iRRAM::REAL b)
     c2 = a + b;
     c3 = c2;
     c3 = 2 + a;
-    if(c1)
+    if (c1)
     {
         return c2;
     }
     iRRAM::REAL c4 = f(c2);
-    if(c3 > c2)
+    if (c3 > c2)
     {
         c4 = c3 + c4;
     }
-    else if(c3 < c2)
+    else if (c3 < c2)
     {
         c4 = c2 - c3;
     }
-    for(int i = 0, j = 0; i < 5; ++i, ++j);
     return c4;
 };

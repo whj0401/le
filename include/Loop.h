@@ -73,11 +73,19 @@ namespace le
         
         void add_procedure(const string& ref_name, const SgExpression* expr, bool is_initial);
     
+        void add_constraint(SgExpression *expr, bool is_not);
+    
         void add_loop(const Loop& loop);
     
+        void clear_path_with_continue_break_return();
+    
         VariableTable collect_all_var_tbl();
+    
+        void merge(const Loop &l);
         
         virtual string to_string(unsigned int tab_num = 0) const;
+    
+        virtual string to_code(unsigned int tab_num = 0) const;
     };
 }
 

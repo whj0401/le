@@ -197,11 +197,19 @@ namespace le
             {
             
             }
-            else if(func_decl_str == "public: inline REAL &operator+=(const class REAL &y);")
+            else if (func_decl_str ==
+                     "public: friend inline class REAL &operator+=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator-=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator*=(class REAL &x,const class REAL &y);" ||
+                     func_decl_str ==
+                     "public: friend inline class REAL &operator/=(class REAL &x,const class REAL &y);")
             {
-            
+                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
+                add_procedure(expr_list[0]->unparseToString(), expr);
             }
-            else if(func_decl_str == "public: inline REAL &operator++();")
+            else
             {
             
             }
@@ -333,6 +341,7 @@ namespace le
         VariableTable tmp = var_tbl;
         for(auto & p : path_list)
         {
+            if (!p.can_add_code()) continue;
             for(auto v : p.var_tbl.T)
             {
                 tmp.add_variable(v.second);
@@ -356,9 +365,24 @@ namespace le
         ss << "\"variables\": " << var_tbl.to_string() << endl;
         ss << "\"input_variables\": " << input_parameters.to_string() << endl;
         ss << "\"paths\": [" << endl;
-        for(auto p : path_list)
+        for (const auto &p : path_list)
         {
             ss << p.to_string(1);
+        }
+        ss << "]" << endl;
+        return ss.str();
+    }
+    
+    string Function::to_code() const
+    {
+        stringstream ss;
+        ss << "\"function_name\": " << "\"" << func_name << "\"" << endl;
+        ss << "\"variables\": " << var_tbl.to_string() << endl;
+        ss << "\"input_variables\": " << input_parameters.to_string() << endl;
+        ss << "\"paths\": [" << endl;
+        for (const auto &p : path_list)
+        {
+            ss << p.to_code(1);
         }
         ss << "]" << endl;
         return ss.str();

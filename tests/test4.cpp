@@ -13,7 +13,18 @@ REAL f(REAL a, REAL b)
     {
         for(REAL j = 0; j < b; j+=REAL(1))
         {
-            sum = sum + i * j;
+            if (i < j)
+            {
+                sum = sum + i * j;
+            }
+            else if (i > j)
+            {
+                sum = sum - i * j;
+            }
+            else
+            {
+                continue;
+            }
         }
     }
     return sum;

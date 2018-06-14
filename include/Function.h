@@ -74,6 +74,8 @@ namespace le
         void merge(const Function & f);
         
         string to_string() const;
+    
+        string to_code() const;
     };
     
 }
