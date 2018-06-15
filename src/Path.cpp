@@ -264,8 +264,9 @@ namespace le
         generate_procedure_block_list();
         for (auto &block : procedure_block_list)
         {
+            string func_name = path_id + "__" + std::to_string(block.block_id);
             ss << endl;
-            ss << "void " << path_id << "__" << block.block_id << input_parameters.to_parameterlist() << "{" << endl;
+            ss << "void " << func_name << input_parameters.to_parameterlist() << "{" << endl;
             ss << input_parameters.to_make_real_klee_symbolic_code(1) << endl;
             ss << var_tbl.to_declaration_code(1) << endl;
             for (size_t i = block.begin_codes_idx; i < block.end_codes_idx; ++i)
@@ -273,6 +274,12 @@ namespace le
                 ss << TAB << codes[i]->to_code() << endl;
             }
             block.add_klee_out_code(ss, 1);
+            ss << "}" << endl << endl;
+            // correspond main function
+            ss << "int main(){" << endl;
+            ss << input_parameters.to_declaration_code(1);
+            ss << TAB << func_name << input_parameters.to_variables_reference_list() << ";" << endl;
+            ss << TAB << "return 0;" << endl;
             ss << "}" << endl;
         }
         for (auto &code : codes)

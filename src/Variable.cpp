@@ -70,5 +70,22 @@ namespace le
         }
         return ss.str();
     }
+    
+    string VariableTable::to_variables_reference_list() const
+    {
+        stringstream ss;
+        ss << "(";
+        unsigned long idx = 0;
+        unsigned long last_idx = T.size() - 1;
+        for (const auto &v : T)
+        {
+            ss << v.second.var_name;
+            if (idx == last_idx) break;
+            idx++;
+            ss << ", ";
+        }
+        ss << ")";
+        return ss.str();
+    }
 }
 

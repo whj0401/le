@@ -84,6 +84,8 @@ namespace le{
         string to_make_real_klee_symbolic_code(unsigned int tab_num = 0) const;
     
         string to_declaration_code(unsigned int tab_num = 0) const;
+    
+        string to_variables_reference_list() const;
     };
     
 }
