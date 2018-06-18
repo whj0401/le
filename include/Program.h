@@ -37,7 +37,7 @@ namespace le
     
         string to_codes_block();
     
-        string to_klee_code_functions();
+        void to_klee_code_functions();
     };
     
     

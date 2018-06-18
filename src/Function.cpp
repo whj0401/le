@@ -5,6 +5,7 @@
 #include <sstream>
 #include "Function.h"
 #include "debug.h"
+#include "REAL_function_list.h"
 
 namespace le
 {
@@ -171,47 +172,60 @@ namespace le
         if(auto func_call = dynamic_cast<SgFunctionCallExp*>(expr))
         {
             string func_decl_str = func_call->getAssociatedFunctionDeclaration()->unparseToString();
-            if (func_decl_str == "public: inline REAL &operator=(const class REAL &y);")
+            if (find_in_member_func_set(func_decl_str))
             {
-                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-                SgVarRefExp* caller = get_func_call_lhs(func_call);
-                add_procedure(caller->unparseToString(), expr_list[0]);
+                SgExpressionPtrList expr_list = get_func_parameters(func_call);
+                SgMemberFunctionRefExp *ref_exp = get_member_func_refExp(func_call);
+                if (ref_exp->unparseToString() == "=")
+                {// now only has assign value operator= in member function set
+                    SgExpression *caller = get_member_func_caller(func_call);
+                    add_procedure(caller->unparseToString(), expr_list[0]);
+                    handle_expression(expr_list[0]);
+                }
             }
-            else if(func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const class REAL &y);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const int n,const class REAL &x);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const int n);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const double n,const class REAL &x);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const double n);")
+            else if (find_in_relative_func_set(func_decl_str))
             {
-//                cout << func_call->unparseToString() << endl;
-            }
-            else if(func_decl_str == "public: friend inline class REAL operator-(const class REAL &x,const class REAL &y);")
-            {
-            
-            }
-            else if(func_decl_str == "public: friend inline class REAL operator*(const class REAL &x,const class REAL &y);")
-            {
-            
-            }
-            else if(func_decl_str == "public: friend inline class REAL operator/(const class REAL &x,const class REAL &y);")
-            {
-            
-            }
-            else if (func_decl_str ==
-                     "public: friend inline class REAL &operator+=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator-=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator*=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator/=(class REAL &x,const class REAL &y);")
-            {
-                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-                add_procedure(expr_list[0]->unparseToString(), expr);
+                SgExpressionPtrList expr_list = get_func_parameters(func_call);
+                SgFunctionRefExp *ref_exp = get_relative_func_refExp(func_call);
+                if (ref_exp->unparseToString() == "+" ||
+                    ref_exp->unparseToString() == "-" ||
+                    ref_exp->unparseToString() == "*" ||
+                    ref_exp->unparseToString() == "/")
+                {
+                    for (auto e : expr_list)
+                    {
+                        handle_expression(e);
+                    }
+                }
+                else if (ref_exp->unparseToString() == "+=" ||
+                         ref_exp->unparseToString() == "-=" ||
+                         ref_exp->unparseToString() == "*=" ||
+                         ref_exp->unparseToString() == "/=")
+                {
+                    add_procedure(expr_list[0]->unparseToString(), expr_list[1]);
+                    handle_expression(expr_list[1]);
+                }
             }
             else
             {
-            
+                // unknown function call
+                // do nothing
+            }
+        }
+        else
+        {
+            if (auto assign_op = dynamic_cast<SgAssignOp *>(expr))
+            {
+                SgExpression *ref = assign_op->get_lhs_operand();
+                SgExpression *value = assign_op->get_rhs_operand();
+                add_procedure(ref->unparseToString(), value);
+                handle_expression(value);
+            }
+            else if (auto compound_op = dynamic_cast<SgCompoundAssignOp *>(expr))
+            {
+                SgExpression *ref = compound_op->get_lhs_operand();
+                add_procedure(ref->unparseToString(), expr);
+                handle_expression(compound_op->get_rhs_operand());
             }
         }
     }
@@ -276,7 +290,7 @@ namespace le
         }
     }
     
-    void Function::add_procedure(const std::string &ref_name, const SgExpression *expr)
+    void Function::add_procedure(const std::string &ref_name, SgExpression *expr)
     {
         if(var_tbl.has_variable(ref_name))
         {
@@ -388,14 +402,12 @@ namespace le
         return ss.str();
     }
     
-    string Function::to_klee_code_functions()
+    void Function::to_klee_code_functions()
     {
-        stringstream ss;
         for (auto &p : path_list)
         {
-            ss << p.to_klee_code_functions(input_parameters);
+            p.to_klee_code_functions(input_parameters);
         }
-        return ss.str();
     }
     
 }

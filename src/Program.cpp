@@ -55,14 +55,13 @@ namespace le
         return ss.str();
     }
     
-    string Program::to_klee_code_functions()
+    void Program::to_klee_code_functions()
     {
-        stringstream ss;
+
         for (auto &f : func_list)
         {
-            ss << f.to_klee_code_functions();
+            f.to_klee_code_functions();
         }
-        return ss.str();
     }
     
     void run_project(int argc, char **argv)
@@ -89,10 +88,10 @@ namespace le
         {
             cout << p.to_codes_block();
         }
-    
-        for (auto &p : program_list)
-        {
-            cout << p.to_klee_code_functions();
-        }
+
+//        for (auto &p : program_list)
+//        {
+//            p.to_klee_code_functions();
+//        }
     }
 }

@@ -7,11 +7,16 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 #include "rose.h"
 
 namespace le
 {
     extern const std::string TAB;
+    
+    extern std::map<VariantT, std::string> operator_str_map;
+    
+    void init_operator_str_map();
     
     inline std::string generate_tab(unsigned int tab_num)
     {
@@ -21,11 +26,11 @@ namespace le
     }
     
     template <class T>
-    T* clone(const SgNode* node)
+    T *clone(SgNode *node)
     {
         if(node == nullptr) return nullptr;
         SgTreeCopy copy;
-        return dynamic_cast<T*>(node->copy(copy));
+        return dynamic_cast<T *>(copy.copyAst(dynamic_cast<SgNode *>(node)));
     }
     
     SgVarRefExp* get_func_call_lhs(SgFunctionCallExp* func_call);
@@ -38,6 +43,10 @@ namespace le
                dynamic_cast<const SgIfStmt *>(stmt) ||
                dynamic_cast<const SgSwitchStatement *>(stmt);
     }
+    
+    bool write_stream_to_file(std::string out_file, std::stringstream &ss);
+    
+    void add_expr_to_stream(std::stringstream &os, SgExpression *expr);
 }
 
 #endif //CODE_ANALYSE_COMMON_H

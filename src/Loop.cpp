@@ -5,6 +5,7 @@
 #include "Loop.h"
 #include "Function.h"
 #include "debug.h"
+#include "REAL_function_list.h"
 
 namespace le
 {
@@ -67,57 +68,61 @@ namespace le
         if(auto func_call = dynamic_cast<SgFunctionCallExp*>(expr))
         {
             string func_decl_str = func_call->getAssociatedFunctionDeclaration()->unparseToString();
-            cout << func_decl_str << endl;
-            if (func_decl_str == "public: inline REAL &operator=(const class REAL &y);")
+            if (find_in_member_func_set(func_decl_str))
             {
-                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-                SgVarRefExp* caller = get_func_call_lhs(func_call);
-                add_procedure(caller->unparseToString(), expr_list[0], is_initial);
+                SgExpressionPtrList expr_list = get_func_parameters(func_call);
+                SgMemberFunctionRefExp *ref_exp = get_member_func_refExp(func_call);
+                if (ref_exp->unparseToString() == "=")
+                {// now only has assign value operator= in member function set
+                    SgExpression *caller = get_member_func_caller(func_call);
+                    add_procedure(caller->unparseToString(), expr_list[0], is_initial);
+                    handle_expression(expr_list[0], is_initial);
+                }
             }
-            else if(func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const class REAL &y);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const int n,const class REAL &x);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const int n);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const double n,const class REAL &x);" ||
-                    func_decl_str == "public: friend inline class REAL operator+(const class REAL &x,const double n);")
+            else if (find_in_relative_func_set(func_decl_str))
             {
-//                cout << func_call->unparseToString() << endl;
-            }
-            else if(func_decl_str == "public: friend inline class REAL operator-(const class REAL &x,const class REAL &y);")
-            {
-            
-            }
-            else if (func_decl_str ==
-                     "public: friend inline class REAL &operator+=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator-=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator*=(class REAL &x,const class REAL &y);" ||
-                     func_decl_str ==
-                     "public: friend inline class REAL &operator/=(class REAL &x,const class REAL &y);")
-            {
-                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-                add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
+                SgExpressionPtrList expr_list = get_func_parameters(func_call);
+                SgFunctionRefExp *ref_exp = get_relative_func_refExp(func_call);
+                if (ref_exp->unparseToString() == "+" ||
+                    ref_exp->unparseToString() == "-" ||
+                    ref_exp->unparseToString() == "*" ||
+                    ref_exp->unparseToString() == "/")
+                {
+                    for (auto e : expr_list)
+                    {
+                        handle_expression(e, is_initial);
+                    }
+                }
+                else if (ref_exp->unparseToString() == "+=" ||
+                         ref_exp->unparseToString() == "-=" ||
+                         ref_exp->unparseToString() == "*=" ||
+                         ref_exp->unparseToString() == "/=")
+                {
+                    add_procedure(expr_list[0]->unparseToString(), expr_list[1], is_initial);
+                    handle_expression(expr_list[1], is_initial);
+                }
             }
             else
             {
-//                SgExpressionPtrList expr_list = func_call->get_args()->get_expressions();
-//                add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
-            }
-        }
-        else if(auto comma_expr = dynamic_cast<SgCommaOpExp*>(expr))
-        {
-            auto list = comma_expr->get_traversalSuccessorContainer();
-            for(auto & node : list)
-            {
-                if(auto e = dynamic_cast<SgExpression*>(node))
-                {
-                    handle_expression(e, is_initial);
-                }
+                // unknown function call
+                // do nothing
             }
         }
         else
         {
-            // regard as codeblock
+            if (auto assign_op = dynamic_cast<SgAssignOp *>(expr))
+            {
+                SgExpression *ref = assign_op->get_lhs_operand();
+                SgExpression *value = assign_op->get_rhs_operand();
+                add_procedure(ref->unparseToString(), value, is_initial);
+                handle_expression(value, is_initial);
+            }
+            else if (auto compound_op = dynamic_cast<SgCompoundAssignOp *>(expr))
+            {
+                SgExpression *ref = compound_op->get_lhs_operand();
+                add_procedure(ref->unparseToString(), expr, is_initial);
+                handle_expression(compound_op->get_rhs_operand(), is_initial);
+            }
         }
     }
     
@@ -242,7 +247,7 @@ namespace le
     
     void Loop::handle_expr_statement(SgExprStatement *expr_s, bool is_initial)
     {
-        print_whole_node(expr_s);
+//        print_whole_node(expr_s);
         SgExpression *expr = expr_s->get_expression();
         handle_expression(expr, is_initial);
     }
@@ -387,7 +392,7 @@ namespace le
         }
     }
     
-    void Loop::add_procedure(const std::string &ref_name, const SgExpression *expr, bool is_initial)
+    void Loop::add_procedure(const std::string &ref_name, SgExpression *expr, bool is_initial)
     {
         if(var_tbl.has_variable(ref_name))
         {
@@ -526,13 +531,11 @@ namespace le
         return ss.str();
     }
     
-    string Loop::to_klee_code_functions()
+    void Loop::to_klee_code_functions()
     {
-        stringstream ss;
         for (auto &p : path_list)
         {
-            ss << p.to_klee_code_functions(var_tbl);
+            p.to_klee_code_functions(var_tbl);
         }
-        return ss.str();
     }
 }

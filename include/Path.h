@@ -55,19 +55,17 @@ namespace le
     {
     public:
         Variable left;
-        const SgExpression *right;
-        
-        Procedure(const Variable& v, const SgExpression* assign_expr) :
-            left(v), right(assign_expr)
-        {
-            Code::t = procedure;
-        }
+        SgExpression *right;
+    
+        Procedure(const Variable &v, SgExpression *assign_expr);
         
         string to_string(unsigned int tab_num = 0) const;
     
         string to_code(unsigned int tab_num = 0) const;
         virtual ~Procedure()
-        {}
+        {
+            delete right;
+        }
     };
     
     bool belongs_to_codeblock(SgStatement *s);
@@ -110,8 +108,8 @@ namespace le
     public:
         CodeCreater() : p_i(0), cb_i(0), l_i(0)
         {}
-        
-        Procedure* create_procedure(const Variable & v, const SgExpression *e);
+    
+        Procedure *create_procedure(const Variable &v, SgExpression *e);
         
         CodeBlock* create_codeblock();
         
@@ -162,8 +160,8 @@ namespace le
         {
             return (!is_return && !can_break && !can_continue);
         }
-        
-        inline void add_procedure(const Variable & v, const SgExpression *e)
+    
+        inline void add_procedure(const Variable &v, SgExpression *e)
         {
             if(can_add_code())
                 codes.push_back(pool->create_procedure(v, e));
@@ -188,7 +186,7 @@ namespace le
         string to_code(unsigned int tab_num = 0) const;
         string to_string_as_initializer() const;
     
-        string to_klee_code_functions(const VariableTable &input_parameters);
+        void to_klee_code_functions(const VariableTable &input_parameters);
         
         ~Path();
     };

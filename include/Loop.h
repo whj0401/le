@@ -70,8 +70,8 @@ namespace le
         Loop(const SgStatement* _loop_stmt, Function* _func_ptr, Loop* _father_loop, CodeCreater* _pool = &paths_pool);
         
         void add_variable(const Variable &v, bool is_initial);
-        
-        void add_procedure(const string& ref_name, const SgExpression* expr, bool is_initial);
+    
+        void add_procedure(const string &ref_name, SgExpression *expr, bool is_initial);
     
         void add_constraint(SgExpression *expr, bool is_not);
     
@@ -87,7 +87,7 @@ namespace le
     
         virtual string to_code(unsigned int tab_num = 0) const;
     
-        string to_klee_code_functions();
+        void to_klee_code_functions();
     };
 }
 

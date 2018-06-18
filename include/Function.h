@@ -60,8 +60,8 @@ namespace le
         Function(const string & _func_name, SgFunctionDeclaration* _decl, CodeCreater* _pool = &paths_pool);
         
         void add_variable(const Variable &v);
-        
-        void add_procedure(const string& ref_name, const SgExpression* expr);
+    
+        void add_procedure(const string &ref_name, SgExpression *expr);
         
         void add_constraint(SgExpression* expr, bool is_not);
         
@@ -77,7 +77,7 @@ namespace le
     
         string to_code() const;
     
-        string to_klee_code_functions();
+        void to_klee_code_functions();
     };
     
 }
