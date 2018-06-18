@@ -123,6 +123,18 @@ namespace le
                 add_procedure(ref->unparseToString(), expr, is_initial);
                 handle_expression(compound_op->get_rhs_operand(), is_initial);
             }
+            else if (auto pp_op = dynamic_cast<SgPlusPlusOp *>(expr))
+            {
+                SgExpression *ref = pp_op->get_operand_i();
+                add_procedure(ref->unparseToString(), expr, is_initial);
+                handle_expression(ref, is_initial);
+            }
+            else if (auto mm_op = dynamic_cast<SgMinusMinusOp *>(expr))
+            {
+                SgExpression *ref = pp_op->get_operand_i();
+                add_procedure(ref->unparseToString(), expr, is_initial);
+                handle_expression(ref, is_initial);
+            }
         }
     }
     

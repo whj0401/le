@@ -156,6 +156,15 @@ namespace le
         {
             return true;
         }
+            // plusplus, minusminus put here temporarily
+        else if (auto pp_op = dynamic_cast<SgPlusPlusOp *>(expr))
+        {
+            return true;
+        }
+        else if (auto mm_op = dynamic_cast<SgMinusMinusOp *>(expr))
+        {
+            return true;
+        }
         return false;
     }
     
@@ -184,6 +193,17 @@ namespace le
             auto iter = tmp.find('=');
             tmp = tmp.erase(iter, 1);
             return tmp;
+        }
+            // plusplus, minusminus put here temporarily
+        else if (auto pp_op = dynamic_cast<SgPlusPlusOp *>(expr))
+        {
+            SgExpression *ref = pp_op->get_operand_i();
+            return ref->unparseToString() + " + 1";
+        }
+        else if (auto mm_op = dynamic_cast<SgMinusMinusOp *>(expr))
+        {
+            SgExpression *ref = mm_op->get_operand_i();
+            return ref->unparseToString() + " - 1";
         }
         return expr->unparseToString();
     }

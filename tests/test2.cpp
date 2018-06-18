@@ -8,7 +8,7 @@ iRRAM::REAL f(iRRAM::REAL x)
 
 iRRAM::REAL test1(iRRAM::REAL a, int b)
 {
-    for (int i = 0; i < b; i++)
+    for (int i = 0; i < b; ++i)
     {
         if (a < b / 2)
         {

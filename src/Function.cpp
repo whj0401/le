@@ -227,6 +227,18 @@ namespace le
                 add_procedure(ref->unparseToString(), expr);
                 handle_expression(compound_op->get_rhs_operand());
             }
+            else if (auto pp_op = dynamic_cast<SgPlusPlusOp *>(expr))
+            {
+                SgExpression *ref = pp_op->get_operand_i();
+                add_procedure(ref->unparseToString(), expr);
+                handle_expression(ref);
+            }
+            else if (auto mm_op = dynamic_cast<SgMinusMinusOp *>(expr))
+            {
+                SgExpression *ref = pp_op->get_operand_i();
+                add_procedure(ref->unparseToString(), expr);
+                handle_expression(ref);
+            }
         }
     }
     

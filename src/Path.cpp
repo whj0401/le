@@ -15,17 +15,9 @@ namespace le
     size_t path_count = 0;
     
     Procedure::Procedure(const Variable &v, SgExpression *assign_expr) :
-            left(v)
+            left(v), right(assign_expr)
     {
         Code::t = procedure;
-        if (is_compound_assign_option(assign_expr))
-        {
-            right = create_relative_binaryOp(assign_expr);
-        }
-        else
-        {
-            right = clone < SgExpression > (assign_expr);
-        }
     }
     
     string Procedure::to_string(unsigned int tab_num) const
@@ -43,11 +35,8 @@ namespace le
             ss << "[\"" << left.var_name << "\", \"" << get_compound_assign_option_str(right) << "\"]";
         }
         else
-//            ss << "[\"" << left.var_name << "\", \"" << right->unparseToString() << "\"]";
         {
-            ss << "[\"" << left.var_name << "\", \"";
-            add_expr_to_stream(ss, right);
-            ss << "\"]";
+            ss << "[\"" << left.var_name << "\", \"" << right->unparseToString() << "\"]";
         }
         ss << endl << tab << "},";
         return ss.str();
@@ -92,8 +81,14 @@ namespace le
         ss << left.var_name << "=";
         if (right == nullptr)
         { ss << "0;"; }
+        else if (is_compound_assign_option(right))
+        {
+            ss << get_compound_assign_option_str(right);
+        }
         else
-        { add_expr_to_stream(ss, right); }
+        {
+            ss << right->unparseToString();
+        }
         return ss.str();
     }
     
