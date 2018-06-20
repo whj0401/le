@@ -112,8 +112,9 @@ namespace le
         Procedure *create_procedure(const Variable &v, SgExpression *e);
         
         CodeBlock* create_codeblock();
-        
-        Loop* create_loop(const SgStatement *stmt, Function* _func_ptr, Loop* _father_loop);
+    
+        Loop *
+        create_loop(const SgStatement *stmt, Function *_func_ptr, Loop *_father_loop, int _dowhile_loop_count = 0);
         
         ~CodeCreater();
         

@@ -155,12 +155,16 @@ namespace le
     
     void Loop::handle_while_statement(SgWhileStmt *while_stmt)
     {
-    
+        Loop *loop = _in_pool->create_loop(while_stmt, func_ptr, this);
+        add_loop(*loop);
     }
     
     void Loop::handle_dowhile_statement(SgDoWhileStmt *dowhile_stmt)
     {
-    
+        Loop *loop1 = _in_pool->create_loop(dowhile_stmt, func_ptr, this, 1);
+        add_loop(*loop1);
+        Loop *loop2 = _in_pool->create_loop(dowhile_stmt, func_ptr, this, 2);
+        add_loop(*loop2);
     }
     
     void Loop::handle_if_statement(SgIfStmt *if_stmt)
@@ -309,9 +313,9 @@ namespace le
         SgStatement *test_stmt = for_stmt->get_test();
         SgExpression *condition = nullptr;
         // condition may be null e.g. for(;;) {}
-        if (auto exprStmt = dynamic_cast<SgExprStatement *>(test_stmt))
+        if (auto expr_stmt = dynamic_cast<SgExprStatement *>(test_stmt))
         {
-            condition = exprStmt->get_expression();
+            condition = expr_stmt->get_expression();
         }
         
         set_init_loop_path(condition);
@@ -339,15 +343,52 @@ namespace le
     
     void Loop::init_while_statement(const SgWhileStmt *while_stmt)
     {
+        set_init_loop_var_tbl();
+        SgStatement *test_stmt = while_stmt->get_condition();
+        SgExpression *condition = nullptr;
+        if (auto expr_stmt = dynamic_cast<SgExprStatement *>(test_stmt))
+        {
+            condition = expr_stmt->get_expression();
+        }
+        set_init_loop_path(condition);
     
+        SgStatement *body_stmt = while_stmt->get_body();
+        handle_statement(body_stmt, false);
     }
     
-    void Loop::init_dowhile_statement(const SgDoWhileStmt *dowhile_stmt)
+    void Loop::init_dowhile_statement1(const SgDoWhileStmt *dowhile_stmt)
     {
-    
+        // this will be a while true loop(first execution of do-while loop is always true)
+        set_init_loop_var_tbl();
+        set_init_loop_path(nullptr);
+        SgStatement *body_stmt = dowhile_stmt->get_body();
+        handle_statement(body_stmt, false);
+        // then set all path to be break, except return path
+        for (auto &p : path_list)
+        {
+            if (p.is_return) continue;
+            if (p.can_continue) p.can_continue = false;
+            p.can_break = true;
+        }
     }
     
-    Loop::Loop(const SgStatement *_loop_stmt, Function* _func_ptr, Loop* _father_loop, CodeCreater* _pool) :
+    void Loop::init_dowhile_statement2(const SgDoWhileStmt *dowhile_stmt)
+    {
+        // this will be a simple while loop, just change the do-while to while
+        set_init_loop_var_tbl();
+        SgStatement *test_stmt = dowhile_stmt->get_condition();
+        SgExpression *condition = nullptr;
+        if (auto expr_stmt = dynamic_cast<SgExprStatement *>(test_stmt))
+        {
+            condition = expr_stmt->get_expression();
+        }
+        set_init_loop_path(condition);
+        SgStatement *body_stmt = dowhile_stmt->get_body();
+        handle_statement(body_stmt, false);
+    }
+    
+    Loop::Loop(const SgStatement *_loop_stmt, Function *_func_ptr, Loop *_father_loop, CodeCreater *_pool,
+               int _dowhile_loop_count) :
             loop_stmt(_loop_stmt), func_ptr(_func_ptr), father_loop(_father_loop), _in_pool(_pool)
     {
         Code::t = loop;
@@ -364,7 +405,22 @@ namespace le
         else if (auto s = dynamic_cast<const SgDoWhileStmt *>(loop_stmt))
         {
             loop_type = DOWHILE;
-            init_dowhile_statement(s);
+            // do while loop will execute at least once, we make while(true) loop at first
+            // this while(true) loop will execute with paths in do-while loop without check the constraint of do-while loop
+            // and they all have a break
+            if (_dowhile_loop_count == 1)
+            {
+                init_dowhile_statement1(s);
+            }
+                // then we will run a while loop, with constraint of the actual do-while loop
+            else if (_dowhile_loop_count == 2)
+            {
+                init_dowhile_statement2(s);
+            }
+            else
+            {
+                assert(false);
+            }
         }
         else
         {

@@ -317,9 +317,10 @@ namespace le
         return cb_list[cb_i - 1];
     }
     
-    Loop* CodeCreater::create_loop(const SgStatement *stmt, Function* _func_ptr, Loop* _father_loop)
+    Loop *
+    CodeCreater::create_loop(const SgStatement *stmt, Function *_func_ptr, Loop *_father_loop, int _dowhile_loop_count)
     {
-        Loop * tmp = new Loop(stmt, _func_ptr, _father_loop);
+        Loop *tmp = new Loop(stmt, _func_ptr, _father_loop, this, _dowhile_loop_count);
         l_list.push_back(tmp);
         l_list[l_i]->_in_pool = this;
         l_i++;

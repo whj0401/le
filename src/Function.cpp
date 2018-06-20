@@ -94,12 +94,16 @@ namespace le
     
     void Function::handle_while_statement(SgWhileStmt *while_stmt)
     {
-    
+        Loop *loop = _in_pool->create_loop(while_stmt, this, nullptr);
+        add_loop(*loop);
     }
     
     void Function::handle_dowhile_statement(SgDoWhileStmt *dowhile_stmt)
     {
-    
+        Loop *loop1 = _in_pool->create_loop(dowhile_stmt, this, nullptr, 1);
+        add_loop(*loop1);
+        Loop *loop2 = _in_pool->create_loop(dowhile_stmt, this, nullptr, 2);
+        add_loop(*loop2);
     }
     
     void Function::handle_if_statement(SgIfStmt *if_stmt)

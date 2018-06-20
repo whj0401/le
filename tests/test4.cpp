@@ -9,23 +9,14 @@ using namespace iRRAM;
 REAL f(REAL a, REAL b)
 {
     REAL sum = 0;
-    for(REAL i = 0; i < a; i+=REAL(1))
+    while (sum < a * b)
     {
-        for(REAL j = 0; j < b; j+=REAL(1))
-        {
-            if (i < j)
-            {
-                sum = sum + i * j;
-            }
-            else if (i > j)
-            {
-                sum = sum - i * j;
-            }
-            else
-            {
-                continue;
-            }
-        }
+        sum += a;
     }
+    
+    do
+    {
+        sum = sum - b;
+    } while (sum > a * b);
     return sum;
 }

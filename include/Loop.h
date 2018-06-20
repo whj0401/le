@@ -54,8 +54,11 @@ namespace le
         void init_for_statement(const SgForStatement* for_stmt);
         
         void init_while_statement(const SgWhileStmt* while_stmt);
+    
+        void init_dowhile_statement1(const SgDoWhileStmt *dowhile_stmt);
+    
+        void init_dowhile_statement2(const SgDoWhileStmt *dowhile_stmt);
         
-        void init_dowhile_statement(const SgDoWhileStmt* dowhile_stmt);
     public:
         string loop_id;
         Function* func_ptr;
@@ -66,8 +69,9 @@ namespace le
         VariableTable var_tbl;
         Path initialize;
         vector<Path> path_list;
-        
-        Loop(const SgStatement* _loop_stmt, Function* _func_ptr, Loop* _father_loop, CodeCreater* _pool = &paths_pool);
+    
+        Loop(const SgStatement *_loop_stmt, Function *_func_ptr, Loop *_father_loop, CodeCreater *_pool = &paths_pool,
+             int _dowhile_loop_count = 0);
         
         void add_variable(const Variable &v, bool is_initial);
     
