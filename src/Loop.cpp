@@ -98,7 +98,7 @@ namespace le
                          ref_exp->unparseToString() == "*=" ||
                          ref_exp->unparseToString() == "/=")
                 {
-                    add_procedure(expr_list[0]->unparseToString(), expr_list[1], is_initial);
+                    add_procedure(expr_list[0]->unparseToString(), func_call, is_initial);
                     handle_expression(expr_list[1], is_initial);
                 }
             }
@@ -363,13 +363,30 @@ namespace le
         set_init_loop_path(nullptr);
         SgStatement *body_stmt = dowhile_stmt->get_body();
         handle_statement(body_stmt, false);
-        // then set all path to be break, except return path
+    
+        SgStatement *test_stmt = dowhile_stmt->get_condition();
+        SgExpression *condition = nullptr;
+        if (auto expr_stmt = dynamic_cast<SgExprStatement *>(test_stmt))
+        {
+            condition = expr_stmt->get_expression();
+        }
+        // do-while loop condition cannot be null
+        assert(condition != nullptr);
+        Constraint break_loop_constraint(condition);
+        
         for (auto &p : path_list)
         {
+            // every path must disobey the condition of do-while loop
+            p.add_constraint(break_loop_constraint);
             if (p.is_return) continue;
-            if (p.can_continue) p.can_continue = false;
+            if (p.can_break) continue;
+            // all paths will be run once
             p.can_break = true;
+            p.can_continue = false;
         }
+        Path all_break_path;
+        all_break_path.can_break = true;
+        path_list.push_back(all_break_path);
     }
     
     void Loop::init_dowhile_statement2(const SgDoWhileStmt *dowhile_stmt)
@@ -383,6 +400,7 @@ namespace le
             condition = expr_stmt->get_expression();
         }
         set_init_loop_path(condition);
+        // all path obey the do-while condition
         SgStatement *body_stmt = dowhile_stmt->get_body();
         handle_statement(body_stmt, false);
     }

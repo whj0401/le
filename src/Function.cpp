@@ -206,7 +206,7 @@ namespace le
                          ref_exp->unparseToString() == "*=" ||
                          ref_exp->unparseToString() == "/=")
                 {
-                    add_procedure(expr_list[0]->unparseToString(), expr_list[1]);
+                    add_procedure(expr_list[0]->unparseToString(), func_call);
                     handle_expression(expr_list[1]);
                 }
             }
