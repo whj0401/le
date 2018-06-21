@@ -300,10 +300,7 @@ namespace le
         if (v.initExpr == nullptr) return;
         
         // put initial expression to path
-        for (auto &p : path_list)
-        {
-            p.add_procedure(v, v.initExpr);
-        }
+        add_procedure(v.var_name, v.initExpr);
     }
     
     void Function::add_procedure(const std::string &ref_name, SgExpression *expr)
@@ -332,11 +329,20 @@ namespace le
                 }
             }
         }
+        string right_str = expression_to_string_with_value_map(expr, current_value_map);
+        if (current_value_map.find(ref_name) != current_value_map.end())
+        {
+            current_value_map.find(ref_name)->second = right_str;
+        }
+        else
+        {
+            current_value_map.insert(pair<string, string>(ref_name, right_str));
+        }
     }
     
     void Function::add_constraint(SgExpression* expr, bool is_not)
     {
-        Constraint tmp(expr, is_not);
+        Constraint tmp(expr, current_value_map, is_not);
         for(auto &path : path_list)
         {
             if(path.is_return) continue;

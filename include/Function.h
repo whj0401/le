@@ -22,6 +22,8 @@ namespace le
     class Function
     {
     private:
+        map<string, string> current_value_map;
+        
         void add_input_parameter(const Variable &v);
     
         void add_input_parameterlist();

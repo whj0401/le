@@ -82,4 +82,49 @@ namespace le
         return false;
     }
     
+    void expression_to_string_with_value_map(std::stringstream &ss, const SgExpression *expr,
+                                             const std::map<std::string, std::string> &val_map)
+    {
+        if (auto func_call = dynamic_cast<const SgFunctionCallExp *>(expr))
+        {
+        
+        }
+        else if (auto binary_op = dynamic_cast<const SgBinaryOp *>(expr))
+        {
+            SgExpression *left = binary_op->get_lhs_operand_i();
+            SgExpression *right = binary_op->get_rhs_operand_i();
+            expression_to_string_with_value_map(ss, left, val_map);
+            ss << get_operator_str(binary_op->variantT());
+            expression_to_string_with_value_map(ss, right, val_map);
+        }
+        else if (auto unary_op = dynamic_cast<const SgUnaryOp *>(expr))
+        {
+            ss << get_operator_str(unary_op->variantT());
+            expression_to_string_with_value_map(ss, unary_op->get_operand(), val_map);
+        }
+        else if (auto var_ref = dynamic_cast<const SgVarRefExp *>(expr))
+        {
+            std::string var_name = var_ref->get_symbol()->get_name().getString();
+            if (val_map.find(var_name) != val_map.end())
+            {
+                ss << "(" << val_map.find(var_name)->second << ")";
+            }
+            else
+            {
+                ss << var_name;
+            }
+        }
+        else if (auto value_exp = dynamic_cast<const SgValueExp *>(expr))
+        {
+            ss << value_exp->get_constant_folded_value_as_string();
+        }
+    }
+    
+    std::string
+    expression_to_string_with_value_map(const SgExpression *expr, const std::map<std::string, std::string> &val_map)
+    {
+        std::stringstream ss;
+        expression_to_string_with_value_map(ss, expr, val_map);
+        return ss.str();
+    }
 }

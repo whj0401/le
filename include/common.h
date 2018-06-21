@@ -46,6 +46,8 @@ namespace le
     
     bool write_stream_to_file(std::string out_file, std::stringstream &ss);
     
+    std::string
+    expression_to_string_with_value_map(const SgExpression *expr, const std::map<std::string, std::string> &val_map);
 }
 
 #endif //CODE_ANALYSE_COMMON_H
