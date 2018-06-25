@@ -134,9 +134,33 @@ namespace le
         void add_klee_out_code(stringstream &ss, unsigned int tab_num) const;
     };
     
+    class Path_block
+    {
+    public:
+        bool is_procedures;
+        map<string, string> value_map;
+        bool is_loop;
+        Loop *loop_ptr;
+        bool is_codeblock;
+        CodeBlock *codeblock_ptr;
+        
+        Path_block() : is_procedures(false), is_loop(false), is_codeblock(false), loop_ptr(nullptr),
+                       codeblock_ptr(nullptr)
+        {}
+        
+        string to_string(unsigned int tab_num) const;
+    };
+    
     class Path
     {
     private:
+        map<string, string> current_value_map;
+        vector<Path_block> blocks;
+    
+        void modify_cur_value_map(string ref_name, const SgExpression *expr);
+    
+        void modify_cur_block();
+        
         void generate_procedure_block_list();
     public:
         CodeCreater* pool;
@@ -162,11 +186,9 @@ namespace le
             return (!is_return && !can_break && !can_continue);
         }
     
-        inline void add_procedure(const Variable &v, SgExpression *e)
-        {
-            if(can_add_code())
-                codes.push_back(pool->create_procedure(v, e));
-        }
+        void add_procedure(const Variable &v, SgExpression *e);
+    
+        void add_procedure(const std::string &ref_name, SgExpression *expr);
         
         inline void add_codeblock(CodeBlock* cb)
         {
@@ -176,11 +198,8 @@ namespace le
         }
         
         void add_loop(const Loop* loop);
-        
-        inline void add_constraint(const Constraint& c)
-        {
-            constraint_list.add_constraint(c);
-        }
+    
+        void add_constraint(const SgExpression *expr, bool is_not);
         
         string to_string(unsigned int tab_num = 0) const;
     

@@ -5,6 +5,7 @@
 #include "Path.h"
 #include "Loop.h"
 #include "REAL_function_list.h"
+#include "debug.h"
 
 namespace le
 {
@@ -118,6 +119,112 @@ namespace le
     {
         assert(pool == loop->_in_pool);
         codes.push_back(loop);
+        current_value_map.clear();
+        modify_cur_block();
+    }
+    
+    void Path::modify_cur_value_map(string ref_name, const SgExpression *expr)
+    {
+        string right_str = expression_to_string_with_value_map(expr, current_value_map);
+        if (current_value_map.find(ref_name) != current_value_map.end())
+        {
+            current_value_map.find(ref_name)->second = right_str;
+        }
+        else
+        {
+            current_value_map.insert(pair<string, string>(ref_name, right_str));
+        }
+    }
+    
+    void Path::modify_cur_block()
+    {
+        if (codes.empty())
+        {
+            return;
+        }
+        if (codes.back()->t == procedure)
+        {
+            if (blocks.empty() || !blocks.back().is_procedures)
+            {
+                Path_block procedures_tmp;
+                procedures_tmp.is_procedures = true;
+                blocks.push_back(procedures_tmp);
+            }
+            blocks.back().value_map = current_value_map;
+        }
+        else if (codes.back()->t == loop)
+        {
+            Path_block loop_tmp;
+            loop_tmp.is_loop = true;
+            loop_tmp.loop_ptr = (Loop *) (codes.back());
+            assert(loop_tmp.loop_ptr != nullptr);
+            blocks.push_back(loop_tmp);
+        }
+        else if (codes.back()->t == codeblock)
+        {
+        
+        }
+    }
+    
+    void Path::add_procedure(const Variable &v, SgExpression *e)
+    {
+        if (can_add_code())
+        {
+            codes.push_back(pool->create_procedure(v, e));
+            modify_cur_value_map(v.var_name, e);
+            modify_cur_block();
+        }
+    }
+    
+    void Path::add_procedure(const std::string &ref_name, SgExpression *expr)
+    {
+        if (var_tbl.has_variable(ref_name))
+        {
+            const Variable &var = var_tbl.find(ref_name);
+            add_procedure(var, expr);
+        }
+        else
+        {
+            print_err_use_variable_without_declaration(ref_name, *this);
+            assert(false);
+        }
+    }
+    
+    void Path::add_constraint(const SgExpression *expr, bool is_not)
+    {
+        if (!can_add_code()) return;
+        Constraint tmp(expr, current_value_map, is_not);
+        constraint_list.add_constraint(tmp);
+    }
+    
+    string Path_block::to_string(unsigned int tab_num) const
+    {
+        stringstream ss;
+        string tab = generate_tab(tab_num);
+        if (is_procedures)
+        {
+            ss << endl;
+            ss << tab << "{" << endl;
+            ss << tab << TAB << "\"type\": " << "\"procedures\"," << endl;
+            ss << tab << TAB << "\"content\": [" << endl;
+            for (auto iter = value_map.begin(); iter != value_map.end(); ++iter)
+            {
+                ss << tab << TAB << TAB << "[" << iter->first << ", " << iter->second << "]," << endl;
+            }
+            ss << tab << TAB << "]" << endl;
+            ss << tab << "}";
+        }
+        else if (is_loop)
+        {
+            assert(loop_ptr != nullptr);
+            ss << loop_ptr->to_string(tab_num);
+        }
+        else
+        {
+            assert(codeblock_ptr != nullptr);
+            ss << codeblock_ptr->to_string(tab_num);
+        }
+        return ss.str();
     }
     
     string Path::to_string(unsigned int tab_num) const
@@ -129,9 +236,13 @@ namespace le
         ss << tab << TAB << "\"variables\": " << var_tbl.to_string() << "," << endl;
         ss << tab << TAB << "\"constraint\": [" << constraint_list.to_string() << "]," << endl;
         ss << tab << TAB << "\"path\": [";
-        for (const auto &p : codes)
+//        for (const auto &p : codes)
+//        {
+//            ss << p->to_string(tab_num + 1);
+//        }
+        for (const auto &b : blocks)
         {
-            ss << p->to_string(tab_num + 1);
+            ss << b.to_string(tab_num + 1);
         }
         if (is_return)
         {

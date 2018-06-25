@@ -277,13 +277,11 @@ namespace le
         }
         // if has a test condition, add two path to loop_list, "enter loop" and "break loop"
         Path enter_loop;
-        Constraint enter_con(condition, true);
-        enter_loop.add_constraint(enter_con);
+        enter_loop.add_constraint(condition, true);
         path_list.push_back(enter_loop);
     
         Path break_loop;
-        Constraint break_con(condition, false);
-        break_loop.add_constraint(break_con);
+        break_loop.add_constraint(condition, false);
         break_loop.can_break = true;
         path_list.push_back(break_loop);
     }
@@ -372,12 +370,11 @@ namespace le
         }
         // do-while loop condition cannot be null
         assert(condition != nullptr);
-        Constraint break_loop_constraint(condition);
         
         for (auto &p : path_list)
         {
             // every path must disobey the condition of do-while loop
-            p.add_constraint(break_loop_constraint);
+            p.add_constraint(condition, true);
             if (p.is_return) continue;
             if (p.can_break) continue;
             // all paths will be run once
@@ -464,18 +461,19 @@ namespace le
         }
     
         if(v.initExpr == nullptr) return;
-        if(is_initial)
-        {
-            initialize.add_procedure(v, v.initExpr);
-        }
-        else
-        {
-            // put initial expression to path
-            for (auto &p : path_list)
-            {
-                p.add_procedure(v, v.initExpr);
-            }
-        }
+        add_procedure(v.var_name, v.initExpr, is_initial);
+//        if(is_initial)
+//        {
+//            initialize.add_procedure(v, v.initExpr);
+//        }
+//        else
+//        {
+//            // put initial expression to path
+//            for (auto &p : path_list)
+//            {
+//                p.add_procedure(v, v.initExpr);
+//            }
+//        }
     }
     
     void Loop::add_procedure(const std::string &ref_name, SgExpression *expr, bool is_initial)
@@ -505,16 +503,7 @@ namespace le
             }
             for(auto & path : path_list)
             {
-                if(path.var_tbl.has_variable(ref_name))
-                {
-                    const Variable & var = path.var_tbl.find(ref_name);
-                    path.add_procedure(var, expr);
-                }
-                else
-                {
-                    print_err_use_variable_without_declaration(ref_name, path);
-                    assert(false);
-                }
+                path.add_procedure(ref_name, expr);
             }
         }
     }
@@ -532,11 +521,9 @@ namespace le
     
     void Loop::add_constraint(SgExpression *expr, bool is_not)
     {
-        Constraint tmp(expr, is_not);
         for (auto &path : path_list)
         {
-            if (path.is_return) continue;
-            path.add_constraint(tmp);
+            path.add_constraint(expr, is_not);
         }
     }
     

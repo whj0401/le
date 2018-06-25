@@ -22,8 +22,6 @@ namespace le
     class Function
     {
     private:
-        map<string, string> current_value_map;
-        
         void add_input_parameter(const Variable &v);
     
         void add_input_parameterlist();
@@ -64,8 +62,8 @@ namespace le
         void add_variable(const Variable &v);
     
         void add_procedure(const string &ref_name, SgExpression *expr);
-        
-        void add_constraint(SgExpression* expr, bool is_not);
+    
+        void add_constraint(const SgExpression *expr, bool is_not);
         
         void add_loop(const Loop& loop);
         

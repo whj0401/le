@@ -87,7 +87,7 @@ namespace le
     {
         if (auto func_call = dynamic_cast<const SgFunctionCallExp *>(expr))
         {
-        
+            ss << func_call->unparseToString();
         }
         else if (auto binary_op = dynamic_cast<const SgBinaryOp *>(expr))
         {
@@ -99,8 +99,19 @@ namespace le
         }
         else if (auto unary_op = dynamic_cast<const SgUnaryOp *>(expr))
         {
-            ss << get_operator_str(unary_op->variantT());
+            if (auto cast_exp = dynamic_cast<const SgCastExp *>(unary_op))
+            {
+                ss << cast_exp->get_type()->unparseToString() << "(";
+            }
+            else
+            {
+                ss << get_operator_str(unary_op->variantT());
+            }
             expression_to_string_with_value_map(ss, unary_op->get_operand(), val_map);
+            if (auto cast_exp = dynamic_cast<const SgCastExp *>(unary_op))
+            {
+                ss << ")";
+            }
         }
         else if (auto var_ref = dynamic_cast<const SgVarRefExp *>(expr))
         {

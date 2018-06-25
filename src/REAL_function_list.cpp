@@ -194,7 +194,7 @@ namespace le
             tmp = tmp.erase(iter, 1);
             return tmp;
         }
-            // plusplus, minusminus put here temporarily
+            // plusplus, minusminus are put here temporarily
         else if (auto pp_op = dynamic_cast<SgPlusPlusOp *>(expr))
         {
             SgExpression *ref = pp_op->get_operand_i();

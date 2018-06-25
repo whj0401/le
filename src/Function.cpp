@@ -317,36 +317,16 @@ namespace le
         {
             for(auto & path : path_list)
             {
-                if(path.var_tbl.has_variable(ref_name))
-                {
-                    const Variable & var = path.var_tbl.find(ref_name);
-                    path.add_procedure(var, expr);
-                }
-                else
-                {
-                    print_err_use_variable_without_declaration(ref_name, path);
-                    assert(false);
-                }
+                path.add_procedure(ref_name, expr);
             }
-        }
-        string right_str = expression_to_string_with_value_map(expr, current_value_map);
-        if (current_value_map.find(ref_name) != current_value_map.end())
-        {
-            current_value_map.find(ref_name)->second = right_str;
-        }
-        else
-        {
-            current_value_map.insert(pair<string, string>(ref_name, right_str));
         }
     }
     
-    void Function::add_constraint(SgExpression* expr, bool is_not)
+    void Function::add_constraint(const SgExpression *expr, bool is_not)
     {
-        Constraint tmp(expr, current_value_map, is_not);
         for(auto &path : path_list)
         {
-            if(path.is_return) continue;
-            path.add_constraint(tmp);
+            path.add_constraint(expr, is_not);
         }
     }
     
